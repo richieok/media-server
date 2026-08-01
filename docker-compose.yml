@@ -23,9 +23,9 @@ services:
     build: ./web
     container_name: m-server-web
     ports:
-      - "5000:5000"
+      - "8100:8100"
     environment:
-      - PORT=5000
+      - PORT=8100
       # Directory listings are fetched server-side over the compose network,
       # so the browser never makes a cross-origin request and no CORS config
       # is needed on the API.
