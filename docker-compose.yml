@@ -1,0 +1,20 @@
+services:
+  m-server:
+    build: .
+    container_name: m-server
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - MEDIA_DIR=/media
+    volumes:
+      # Host media library. Override MEDIA_HOST_DIR in .env for local dev.
+      # create_host_path:false makes Compose fail loudly if the drive isn't
+      # mounted, instead of silently serving an empty auto-created directory.
+      - type: bind
+        source: ${MEDIA_HOST_DIR:-/srv/mediadrive/media}
+        target: /media
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped

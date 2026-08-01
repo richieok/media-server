@@ -1,0 +1,18 @@
+{
+  "name": "m-server",
+  "version": "1.0.0",
+  "description": "Express API that serves media files from a folder, with directory listing and range-request streaming.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "mime-types": "^2.1.35"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
