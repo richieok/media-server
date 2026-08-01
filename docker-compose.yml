@@ -18,3 +18,22 @@ services:
         bind:
           create_host_path: false
     restart: unless-stopped
+
+  web:
+    build: ./web
+    container_name: m-server-web
+    ports:
+      - "8080:3000"
+    environment:
+      - PORT=3000
+      # Directory listings are fetched server-side over the compose network,
+      # so the browser never makes a cross-origin request and no CORS config
+      # is needed on the API.
+      - API_INTERNAL_URL=http://m-server:4000
+      # Media bytes are loaded by the browser directly from the API, bypassing
+      # this service so video isn't proxied through Node. Unset means "same
+      # host as the UI, port 4000", which needs no configuration on the Pi.
+      - MEDIA_PUBLIC_BASE=${MEDIA_PUBLIC_BASE:-}
+    depends_on:
+      - m-server
+    restart: unless-stopped
