@@ -17,7 +17,7 @@
   const FRAME_H = 90;
   const FRAME_COUNT = SPRITE_COLS * SPRITE_ROWS;
 
-  const spriteUrl = base + "/media/" + spriteSheetPath(item);
+  const spriteUrl = base + "/" + spriteSheetPath(item);
   let spriteReady = false;
   const probe = new Image();
   probe.onload = () => (spriteReady = true);
