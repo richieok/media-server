@@ -21,7 +21,13 @@
   let spriteReady = false;
   const probe = new Image();
   probe.onload = () => (spriteReady = true);
-  probe.onerror = () => (spriteReady = false);
+  probe.onerror = () => {
+    spriteReady = false;
+    // Deliberate degradation (no thumbnail, seeking still works), but say
+    // so in the console — a naming mismatch looks identical to a missing
+    // sheet, and this is the only place the attempted URL is visible.
+    console.warn(`No scrub-preview sprite sheet at ${spriteUrl}`);
+  };
   probe.src = spriteUrl;
 
   let wrapperEl;
