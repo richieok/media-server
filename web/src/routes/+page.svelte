@@ -1,5 +1,6 @@
 <script>
   import { formatSize, kindOf, ICONS, breadcrumbs } from "$lib/format.js";
+  import VideoPlayer from "$lib/VideoPlayer.svelte";
 
   export let data;
 
@@ -108,8 +109,7 @@
       </div>
 
       {#if kind === "video"}
-        <!-- svelte-ignore a11y-media-has-caption -->
-        <video src={base + playing.url} controls autoplay playsinline></video>
+        <VideoPlayer src={base + playing.url} item={playing} {base} />
       {:else if kind === "audio"}
         <audio src={base + playing.url} controls autoplay></audio>
       {:else}
@@ -277,7 +277,6 @@
     color: var(--text);
   }
 
-  video,
   img {
     display: block;
     width: 100%;

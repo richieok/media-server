@@ -12,6 +12,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 const MEDIA_ROOT = path.resolve(process.env.MEDIA_DIR || path.join(__dirname, "..", "media"));
 
+// Scrub-preview sprite sheets ("<name>-spritesh.jpg", generated externally)
+// are an implementation detail of the video player, not browsable content —
+// hidden from listings the same way dotfiles are. Must match web/src/lib/
+// format.js's spriteSheetPath, which derives this filename from a video path.
+const SPRITE_SHEET_RE = /-spritesh\.jpg$/i;
+
 // Optional: enables transparent decryption of "<name>.enc" files. Files
 // stored under this suffix are AES-256-CTR encrypted at rest and only ever
 // decrypted in memory, while streaming, for the duration of a request.
@@ -62,7 +68,7 @@ app.get("/api/files", async (req, res) => {
     const entries = await fsp.readdir(targetPath, { withFileTypes: true });
     const items = await Promise.all(
       entries
-        .filter((entry) => !entry.name.startsWith("."))
+        .filter((entry) => !entry.name.startsWith(".") && !SPRITE_SHEET_RE.test(entry.name))
         .map(async (entry) => {
           if (entry.isDirectory()) {
             const entryRelPath = path.join(relDir, entry.name);
