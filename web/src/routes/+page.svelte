@@ -72,13 +72,13 @@
             </a>
           {:else if kind === "file"}
             <a class="row" href={base + item.url} download={item.name}>
-              <span class="icon" aria-hidden="true">{ICONS.file}</span>
+              <span class="icon" aria-hidden="true">{item.encrypted ? "🔒 " : ""}{ICONS.file}</span>
               <span class="name">{item.name}</span>
               <span class="meta">{formatSize(item.size)} · download</span>
             </a>
           {:else}
             <button class="row" type="button" on:click={() => open(item)}>
-              <span class="icon" aria-hidden="true">{ICONS[kind]}</span>
+              <span class="icon" aria-hidden="true">{item.encrypted ? "🔒 " : ""}{ICONS[kind]}</span>
               <span class="name">{item.name}</span>
               <span class="meta">{formatSize(item.size)}</span>
             </button>

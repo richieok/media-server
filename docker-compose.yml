@@ -7,6 +7,10 @@ services:
     environment:
       - PORT=4000
       - MEDIA_DIR=/media
+      # 256-bit hex key enabling transparent decryption of "<name>.enc"
+      # files. Leave unset (the default) to disable the feature entirely;
+      # plain files are unaffected either way. See .env.example.
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
     volumes:
       # Host drive root (all top-level folders, not just "media"). Override
       # MEDIA_HOST_DIR in .env for local dev. create_host_path:false makes
@@ -38,3 +42,21 @@ services:
     depends_on:
       - m-server
     restart: unless-stopped
+
+  # One-off tool, not started by `docker compose up`. m-server's own mount
+  # is read-only by design, so encrypting/decrypting files in place needs a
+  # separate read-write mount of the same drive:
+  #   docker compose run --rm encrypt encrypt /media/movies/clip.mp4
+  #   docker compose run --rm encrypt decrypt /media/movies/clip.mp4.enc
+  encrypt:
+    build: .
+    profiles: ["tools"]
+    environment:
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
+    volumes:
+      - type: bind
+        source: ${MEDIA_HOST_DIR:-/srv/mediadrive}
+        target: /media
+        bind:
+          create_host_path: false
+    entrypoint: ["node", "scripts/media-crypto.mjs"]
