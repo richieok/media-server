@@ -26,18 +26,28 @@ if [[ $EUID -ne 0 ]]; then
   exit 1
 fi
 
+# Keep systemd's view of fstab fresh, so mount doesn't emit confusing
+# "fstab has been modified ... use daemon-reload" hints mid-script.
+command -v systemctl >/dev/null && systemctl daemon-reload
+
 current_opts="$(findmnt -no OPTIONS "$MOUNTPOINT" 2>/dev/null || true)"
 if [[ "$current_opts" == rw* ]]; then
   echo "$MOUNTPOINT is already mounted read-write; nothing to do."
   exit 0
 fi
 
-# Reuse the fstab entry's own source/type/options so this script never
-# drifts from the mount configuration, just with ro flipped to rw.
+# Build the mount options ourselves: fstab's list with any ro/rw stripped,
+# then the mode this script exists to set placed first. Deriving the mode
+# from fstab (an earlier version substituted ro->rw in place) silently does
+# the wrong thing when fstab doesn't say what we assume it says.
 fstab_src="$(findmnt --fstab -no SOURCE "$MOUNTPOINT")"
 fstab_type="$(findmnt --fstab -no FSTYPE "$MOUNTPOINT")"
-rw_opts="$(findmnt --fstab -no OPTIONS "$MOUNTPOINT" | sed -E 's/(^|,)ro(,|$)/\1rw\2/')"
+fstab_opts="$(findmnt --fstab -no OPTIONS "$MOUNTPOINT")"
 device="$(findmnt --fstab --evaluate -no SOURCE "$MOUNTPOINT" 2>/dev/null || echo "$fstab_src")"
+
+other_opts="$(printf '%s' "$fstab_opts" |
+  awk -F, '{for (i = 1; i <= NF; i++) if ($i != "ro" && $i != "rw") printf "%s%s", (n++ ? "," : ""), $i}')"
+rw_opts="rw${other_opts:+,$other_opts}"
 
 echo "Stopping m-server (it holds the mount busy)..."
 docker compose --project-directory "$REPO_DIR" stop m-server 2>/dev/null || true
@@ -66,6 +76,13 @@ fi
 
 echo "Restarting m-server..."
 docker compose --project-directory "$REPO_DIR" start m-server 2>/dev/null || true
+
+# Never report a state we haven't confirmed.
+state="$(findmnt -no OPTIONS "$MOUNTPOINT")"
+if [[ "$state" != rw* ]]; then
+  echo "ERROR: expected rw but $MOUNTPOINT is mounted with: $state" >&2
+  exit 1
+fi
 
 echo ""
 findmnt "$MOUNTPOINT"
