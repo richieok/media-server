@@ -57,6 +57,5 @@ export function formatTime(seconds) {
  * not by this app). Not every video has one; callers must handle a 404.
  */
 export function spriteSheetPath(item) {
-  console.log(item.path)
   return item.path.replace(/\.[^./]+$/, "") + "-spritesh.jpg";
 }

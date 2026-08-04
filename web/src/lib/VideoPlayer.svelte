@@ -2,10 +2,7 @@
   import { onMount } from "svelte";
   import { formatTime, spriteSheetPath } from "$lib/format.js";
 
-  export let src;
-  export let item;
-  export let base;
-  export let autoplay = true;
+  let { src, item, base, autoplay = true } = $props();
 
   // Fixed by the sheet-generation script: 5x5 grid, 160x90 per frame, 25
   // frames evenly covering the whole video regardless of its length. That
@@ -22,7 +19,7 @@
   // request and the CSS url() below.
   const spriteUrl =
     base + "/media/" + spriteSheetPath(item).split("/").map(encodeURIComponent).join("/");
-  let spriteReady = false;
+  let spriteReady = $state(false);
   const probe = new Image();
   probe.onload = () => (spriteReady = true);
   probe.onerror = () => {
@@ -38,25 +35,27 @@
   let videoEl;
   let barEl;
 
-  let playing = false;
-  let currentTime = 0;
-  let duration = 0;
-  let muted = false;
-  let volume = 1;
+  let playing = $state(false);
+  let currentTime = $state(0);
+  let duration = $state(0);
+  let muted = $state(false);
+  let volume = $state(1);
 
-  let dragging = false;
-  let hovering = false;
-  let hoverFraction = 0;
-  let previewLeft = 0;
+  let dragging = $state(false);
+  let hovering = $state(false);
+  let hoverFraction = $state(0);
+  let previewLeft = $state(0);
   let lastSeekAt = 0;
   const SEEK_THROTTLE_MS = 120;
 
-  $: progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
-  $: previewVisible = spriteReady && (hovering || dragging);
-  $: previewFrame = Math.min(FRAME_COUNT - 1, Math.max(0, Math.floor(hoverFraction * FRAME_COUNT)));
-  $: previewCol = previewFrame % SPRITE_COLS;
-  $: previewRow = Math.floor(previewFrame / SPRITE_COLS);
-  $: previewTime = hoverFraction * duration;
+  let progressPct = $derived(duration > 0 ? (currentTime / duration) * 100 : 0);
+  let previewVisible = $derived(spriteReady && (hovering || dragging));
+  let previewFrame = $derived(
+    Math.min(FRAME_COUNT - 1, Math.max(0, Math.floor(hoverFraction * FRAME_COUNT)))
+  );
+  let previewCol = $derived(previewFrame % SPRITE_COLS);
+  let previewRow = $derived(Math.floor(previewFrame / SPRITE_COLS));
+  let previewTime = $derived(hoverFraction * duration);
 
   onMount(() => wrapperEl.focus());
 
@@ -161,40 +160,46 @@
   }
 </script>
 
-<div class="video-player" bind:this={wrapperEl} tabindex="0" on:keydown={onKeydown}>
+<div class="video-player" bind:this={wrapperEl} tabindex="0" onkeydown={onKeydown}>
   <!-- svelte-ignore a11y-media-has-caption -->
   <video
     bind:this={videoEl}
     {src}
     {autoplay}
     playsinline
-    on:click={togglePlay}
-    on:play={() => (playing = true)}
-    on:pause={() => (playing = false)}
-    on:loadedmetadata={() => (duration = videoEl.duration)}
-    on:timeupdate={() => {
+    onclick={togglePlay}
+    onplay={() => (playing = true)}
+    onpause={() => (playing = false)}
+    onloadedmetadata={() => (duration = videoEl.duration)}
+    ontimeupdate={() => {
       if (!dragging) currentTime = videoEl.currentTime;
     }}
-    on:volumechange={() => {
+    onvolumechange={() => {
       muted = videoEl.muted;
       volume = videoEl.volume;
     }}
   ></video>
 
   <div class="controls">
-    <button class="icon-btn" type="button" on:click={togglePlay} aria-label={playing ? "Pause" : "Play"}>
+    <button class="icon-btn" type="button" onclick={togglePlay} aria-label={playing ? "Pause" : "Play"}>
       {playing ? "⏸" : "▶"}
     </button>
 
     <div
       class="seek"
+      role="slider"
+      tabindex="0"
+      aria-label="Seek"
+      aria-valuemin="0"
+      aria-valuemax={duration}
+      aria-valuenow={currentTime}
       bind:this={barEl}
-      on:pointerenter={onPointerEnter}
-      on:pointerleave={onPointerLeave}
-      on:pointermove={onPointerMove}
-      on:pointerdown={onPointerDown}
-      on:pointerup={onPointerUp}
-      on:pointercancel={onPointerUp}
+      onpointerenter={onPointerEnter}
+      onpointerleave={onPointerLeave}
+      onpointermove={onPointerMove}
+      onpointerdown={onPointerDown}
+      onpointerup={onPointerUp}
+      onpointercancel={onPointerUp}
     >
       <div class="seek-track">
         <div class="seek-fill" style="width: {progressPct}%"></div>
@@ -214,7 +219,7 @@
 
     <span class="time">{formatTime(currentTime)} / {formatTime(duration)}</span>
 
-    <button class="icon-btn" type="button" on:click={toggleMute} aria-label={muted ? "Unmute" : "Mute"}>
+    <button class="icon-btn" type="button" onclick={toggleMute} aria-label={muted ? "Unmute" : "Mute"}>
       {muted || volume === 0 ? "🔇" : "🔊"}
     </button>
     <input
@@ -224,11 +229,11 @@
       max="1"
       step="0.05"
       value={volume}
-      on:input={onVolumeInput}
+      oninput={onVolumeInput}
       aria-label="Volume"
     />
 
-    <button class="icon-btn" type="button" on:click={toggleFullscreen} aria-label="Fullscreen">⛶</button>
+    <button class="icon-btn" type="button" onclick={toggleFullscreen} aria-label="Fullscreen">⛶</button>
   </div>
 </div>
 
