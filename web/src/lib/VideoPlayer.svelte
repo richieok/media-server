@@ -17,7 +17,11 @@
   const FRAME_H = 90;
   const FRAME_COUNT = SPRITE_COLS * SPRITE_ROWS;
 
-  const spriteUrl = base + "/" + spriteSheetPath(item);
+  // Percent-encode each path segment so filenames with spaces or other
+  // special characters ("One more day-spritesh.jpg") survive both the HTTP
+  // request and the CSS url() below.
+  const spriteUrl =
+    base + "/media/" + spriteSheetPath(item).split("/").map(encodeURIComponent).join("/");
   let spriteReady = false;
   const probe = new Image();
   probe.onload = () => (spriteReady = true);
@@ -200,7 +204,7 @@
         <div class="preview" style="left: {previewLeft}px">
           <div
             class="preview-thumb"
-            style="background-image: url({spriteUrl}); background-position: -{previewCol *
+            style="background-image: url('{spriteUrl}'); background-position: -{previewCol *
               FRAME_W}px -{previewRow * FRAME_H}px"
           ></div>
           <div class="preview-time">{formatTime(previewTime)}</div>
