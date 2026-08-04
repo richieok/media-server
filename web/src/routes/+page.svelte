@@ -2,13 +2,13 @@
   import { formatSize, kindOf, ICONS, breadcrumbs } from "$lib/format.js";
   import VideoPlayer from "$lib/VideoPlayer.svelte";
 
-  export let data;
+  let { data } = $props();
 
-  let playing = null;
+  let playing = $state(null);
 
-  $: crumbs = breadcrumbs(data.dir);
-  $: base = data.mediaBase;
-  $: parentDir = data.dir.split("/").slice(0, -1).join("/");
+  let crumbs = $derived(breadcrumbs(data.dir));
+  let base = $derived(data.mediaBase);
+  let parentDir = $derived(data.dir.split("/").slice(0, -1).join("/"));
 
   function hrefFor(dir) {
     return dir ? `/?dir=${encodeURIComponent(dir)}` : "/";
@@ -27,7 +27,7 @@
   }
 </script>
 
-<svelte:window on:keydown={onKeydown} />
+<svelte:window onkeydown={onKeydown} />
 
 <svelte:head>
   <title>{data.dir ? `${data.dir} · Media Library` : "Media Library"}</title>
@@ -78,7 +78,7 @@
               <span class="meta">{formatSize(item.size)} · download</span>
             </a>
           {:else}
-            <button class="row" type="button" on:click={() => open(item)}>
+            <button class="row" type="button" onclick={() => open(item)}>
               <span class="icon" aria-hidden="true">{item.encrypted ? "🔒 " : ""}{ICONS[kind]}</span>
               <span class="name">{item.name}</span>
               <span class="meta">{formatSize(item.size)}</span>
@@ -98,12 +98,12 @@
     role="dialog"
     aria-modal="true"
     aria-label={playing.name}
-    on:click={close}
+    onclick={close}
   >
-    <div class="player" on:click|stopPropagation>
+    <div class="player" onclick={(event) => event.stopPropagation()}>
       <div class="player-bar">
         <span class="player-name">{playing.name}</span>
-        <button class="close" type="button" on:click={close} aria-label="Close">
+        <button class="close" type="button" onclick={close} aria-label="Close">
           ✕
         </button>
       </div>
